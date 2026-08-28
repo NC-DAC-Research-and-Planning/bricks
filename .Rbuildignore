@@ -7,5 +7,6 @@
 ^docs$
 ^pkgdown$
 ^\.vscode$
+^\.posit$
 ^cran-comments\.md$
 ^CRAN-SUBMISSION$
