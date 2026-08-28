@@ -1,0 +1,40 @@
+Package: bricks
+Title: Backend-Agnostic Databricks Data Access
+Version: 0.0.0.9000
+Authors@R: 
+    person("Alex", "Jakubow", email = "alex.jakubow@dac.nc.gov",
+           role = c("aut", "cre"))
+Description: A small, unified interface for reading data from Databricks in R,
+    regardless of how you connect. The same handful of verbs work across a
+    Databricks SQL warehouse (via 'DBI' and 'odbc'), a native 'sparklyr'
+    session inside a Databricks notebook, a remote Databricks Connect session
+    (via 'pysparklyr'), and a local CSV extract. Table and SQL handles stay
+    lazy so filters, joins, and aggregations push down to Databricks compute,
+    and a single collect step pulls a local tibble.
+License: MIT + file LICENSE
+URL: https://github.com/NC-DAC-Research-and-Planning/bricks
+BugReports: https://github.com/NC-DAC-Research-and-Planning/bricks/issues
+Depends: 
+    R (>= 4.1)
+Imports: 
+    dbplyr,
+    dplyr,
+    rlang,
+    tibble
+Suggests: 
+    bit64,
+    DBI,
+    knitr,
+    odbc,
+    pysparklyr,
+    readr,
+    rmarkdown,
+    sparklyr,
+    testthat (>= 3.0.0),
+    withr
+VignetteBuilder: 
+    knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.0

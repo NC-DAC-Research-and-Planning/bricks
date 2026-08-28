@@ -1,0 +1,85 @@
+---
+title: "Getting started with bricks"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with bricks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r setup}
+library(bricks)
+```
+
+## The idea
+
+`bricks` gives you one small vocabulary for reading Databricks data, so the
+same analysis code runs whether you are on a SQL warehouse, inside a Databricks
+notebook, connected remotely with Databricks Connect, or working from a local
+CSV extract. You pick the backend once (or let it auto-detect); everything else
+is identical.
+
+## The workflow
+
+```{r}
+con <- bricks_connect()
+on.exit(bricks_disconnect(con), add = TRUE)
+
+dat <- bricks_tbl(con, "main.default.diamonds") |>
+  dplyr::filter(cut == "Ideal") |>
+  dplyr::summarise(mean_price = mean(price), .by = color) |>
+  bricks_collect()
+```
+
+Three ideas do all the work:
+
+* **`bricks_connect()`** opens a connection for the resolved backend and returns
+  a lightweight `bricks_con` the other verbs dispatch on.
+* **`bricks_tbl()` / `bricks_sql()`** return *lazy* tables. Additional `dplyr`
+  verbs are translated to SQL and executed by Databricks, not by R.
+* **`bricks_collect()`** materialises the result locally as a tibble, casting
+  Spark `BIGINT` columns (`bit64::integer64`) to `double` on the way out.
+
+## Choosing a backend
+
+Resolution order, highest priority first:
+
+```{r}
+# 1. an explicit option
+options(bricks.backend = "odbc")
+
+# 2. an environment variable
+Sys.setenv(BRICKS_BACKEND = "databricks_connect")
+
+# 3. otherwise auto-detect: "databricks" on a cluster, else "odbc"
+bricks_backend()
+```
+
+You can also pass the backend directly:
+
+```{r}
+con <- bricks_connect("csv", path = "extract.csv")
+```
+
+## Credentials
+
+Connections read from the environment (for example `~/.Renviron`); the package
+stores nothing itself.
+
+* SQL warehouse (`odbc`): `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`.
+* Databricks Connect: `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, and optionally
+  `DATABRICKS_CLUSTER_ID` / `DATABRICKS_DBR_VERSION`.
+
+The Databricks Connect backend also needs a one-time Python environment install:
+
+```{r}
+pysparklyr::install_databricks()
+```

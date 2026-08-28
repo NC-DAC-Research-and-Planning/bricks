@@ -1,0 +1,71 @@
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# bricks
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/NC-DAC-Research-and-Planning/bricks/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/NC-DAC-Research-and-Planning/bricks/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
+`bricks` is a small, unified interface for reading data from Databricks in R,
+regardless of *how* you connect. Write the query once; switch backends with a
+single option.
+
+| backend                | how you connect                                   | compute runs        |
+|------------------------|---------------------------------------------------|---------------------|
+| `"odbc"`               | `DBI` + `odbc` SQL warehouse                       | locally, on pull    |
+| `"databricks"`         | `sparklyr` (native, inside a notebook)             | in Databricks       |
+| `"databricks_connect"` | `sparklyr` via Databricks Connect (`pysparklyr`)   | in Databricks       |
+| `"csv"`                | a local governed/offline extract                   | locally             |
+
+## Installation
+
+``` r
+# install.packages("pak")
+pak::pak("NC-DAC-Research-and-Planning/bricks")
+```
+
+## Usage
+
+The same three lines work for every backend:
+
+``` r
+library(bricks)
+
+con <- bricks_connect()                        # backend auto-resolved
+on.exit(bricks_disconnect(con), add = TRUE)
+
+# Raw SQL, lazily:
+dat <- bricks_sql(con, "select * from main.default.diamonds") |>
+  bricks_collect()
+
+# Or a lazy table with dplyr push-down:
+dat <- bricks_tbl(con, "main.default.diamonds") |>
+  dplyr::filter(cut == "Ideal") |>
+  dplyr::summarise(n = dplyr::n(), .by = color) |>
+  bricks_collect()
+```
+
+`bricks_tbl()` and `bricks_sql()` stay **lazy** (via `dbplyr` / `sparklyr`), so
+filters, joins, and aggregations push down to Databricks compute.
+`bricks_collect()` pulls a local tibble and casts Spark `BIGINT`
+(`bit64::integer64`) columns to `double`.
+
+## Choosing a backend
+
+`bricks_connect()` resolves the backend from, in order:
+
+1.  the `bricks.backend` option — `options(bricks.backend = "odbc")`
+2.  the `BRICKS_BACKEND` environment variable
+3.  auto-detection — `"databricks"` inside a Databricks runtime, else
+    `"odbc"`
+
+## Configuration
+
+Connections read credentials from the environment (e.g. `~/.Renviron`);
+nothing is stored by the package. Depending on the backend you use:
+
+- `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID` — SQL warehouse (odbc)
+- `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, and optionally
+  `DATABRICKS_CLUSTER_ID` / `DATABRICKS_DBR_VERSION` — Databricks Connect
+
+Never commit `.Renviron` or tokens.

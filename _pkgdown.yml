@@ -1,0 +1,21 @@
+template:
+  bootstrap: 5
+
+reference:
+- title: Connect
+  desc: Open and close a backend-agnostic connection.
+  contents:
+  - bricks_connect
+  - bricks_disconnect
+  - bricks_backend
+- title: Query
+  desc: Reference tables and SQL lazily, then collect locally.
+  contents:
+  - bricks_tbl
+  - bricks_sql
+  - bricks_collect
+- title: Low-level connectors
+  desc: Backend-specific builders that bricks_connect() wraps.
+  contents:
+  - databricks_connect
+  - databricks_spark_connect

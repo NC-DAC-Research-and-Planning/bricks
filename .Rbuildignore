@@ -1,0 +1,11 @@
+^bricks\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^LICENSE\.md$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.vscode$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
