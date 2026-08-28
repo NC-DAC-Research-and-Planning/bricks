@@ -1,8 +1,10 @@
+
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 # bricks
 
 <!-- badges: start -->
+
 [![R-CMD-check](https://github.com/NC-DAC-Research-and-Planning/bricks/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/NC-DAC-Research-and-Planning/bricks/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -10,12 +12,12 @@
 regardless of *how* you connect. Write the query once; switch backends with a
 single option.
 
-| backend                | how you connect                                   | compute runs        |
-|------------------------|---------------------------------------------------|---------------------|
-| `"odbc"`               | `DBI` + `odbc` SQL warehouse                       | locally, on pull    |
-| `"databricks"`         | `sparklyr` (native, inside a notebook)             | in Databricks       |
-| `"databricks_connect"` | `sparklyr` via Databricks Connect (`pysparklyr`)   | in Databricks       |
-| `"csv"`                | a local governed/offline extract                   | locally             |
+| backend | how you connect | compute runs |
+|----|----|----|
+| `"odbc"` | `DBI` + `odbc` SQL warehouse | locally, on pull |
+| `"databricks"` | `sparklyr` (native, inside a notebook) | in Databricks |
+| `"databricks_connect"` | `sparklyr` via Databricks Connect (`pysparklyr`) | in Databricks |
+| `"csv"` | a local governed/offline extract | locally |
 
 ## Installation
 
@@ -56,16 +58,15 @@ filters, joins, and aggregations push down to Databricks compute.
 
 1.  the `bricks.backend` option — `options(bricks.backend = "odbc")`
 2.  the `BRICKS_BACKEND` environment variable
-3.  auto-detection — `"databricks"` inside a Databricks runtime, else
-    `"odbc"`
+3.  auto-detection — `"databricks"` inside a Databricks runtime, else `"odbc"`
 
 ## Configuration
 
-Connections read credentials from the environment (e.g. `~/.Renviron`);
-nothing is stored by the package. Depending on the backend you use:
+Connections read credentials from the environment (e.g. `~/.Renviron`); nothing
+is stored by the package. Depending on the backend you use:
 
 - `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID` — SQL warehouse (odbc)
-- `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, and optionally
-  `DATABRICKS_CLUSTER_ID` / `DATABRICKS_DBR_VERSION` — Databricks Connect
+- `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, and optionally `DATABRICKS_CLUSTER_ID`
+  / `DATABRICKS_DBR_VERSION` — Databricks Connect
 
 Never commit `.Renviron` or tokens.
