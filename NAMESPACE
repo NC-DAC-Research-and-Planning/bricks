@@ -2,6 +2,7 @@
 
 S3method(print,bricks_con)
 export(bricks_backend)
+export(bricks_check)
 export(bricks_collect)
 export(bricks_connect)
 export(bricks_disconnect)

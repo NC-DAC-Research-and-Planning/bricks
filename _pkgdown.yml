@@ -8,6 +8,7 @@ reference:
   - bricks_connect
   - bricks_disconnect
   - bricks_backend
+  - bricks_check
 - title: Query
   desc: Reference tables and SQL lazily, then collect locally.
   contents:

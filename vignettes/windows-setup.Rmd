@@ -1,0 +1,99 @@
+---
+title: "Connecting from Windows (and RStudio/Positron) survival guide"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Connecting from Windows (and RStudio/Positron) survival guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+```
+
+Getting a bricks connection working from a Windows workstation trips over a few
+environment issues that have nothing to do with Databricks itself. This guide
+collects the ones we have actually hit, in the order they tend to bite.
+
+Start every diagnosis with `bricks_check()`, which reports what a backend needs
+without opening a connection:
+
+```{r}
+library(bricks)
+bricks_check("odbc")
+```
+
+## 1. Where R looks for `.Renviron`
+
+bricks reads its configuration (`DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`,
+`DATABRICKS_TOKEN`) from the environment, typically your user `.Renviron`. On
+Windows, R's home directory (`~`) is often the **Documents** folder, which may
+be redirected into OneDrive:
+
+```{r}
+path.expand("~")
+#> "C:/Users/you/OneDrive - Org/Documents"   # not C:/Users/you !
+```
+
+R reads `~/.Renviron` at startup, so a `.Renviron` you saved in
+`C:/Users/you/` will be ignored if `~` points somewhere else. Two fixes:
+
+* **Recommended:** set `HOME` as a *Windows user environment variable* (not a
+  line inside `.Renviron` -- that is too late, because R resolves `HOME` before
+  reading the file):
+
+  ```powershell
+  [Environment]::SetEnvironmentVariable("HOME", "C:\Users\you", "User")
+  ```
+
+  Then fully restart your IDE so it inherits the new value, and move your
+  `.Renviron` to `C:/Users/you/.Renviron`.
+
+* **Or** simply put `.Renviron` wherever `path.expand("~")` reports.
+
+## 2. A trailing newline matters
+
+R silently drops the last line of `.Renviron` if the file does not end in a
+newline. If `DATABRICKS_TOKEN` is your last line and the token appears unset,
+this is the usual cause. Ensure a blank final line, or check:
+
+```{r}
+nzchar(Sys.getenv("DATABRICKS_TOKEN"))
+#> TRUE
+```
+
+## 3. Some IDE kernels skip `.Renviron`
+
+Some editor R kernels load `.Rprofile` at startup but not the user `.Renviron`.
+If `bricks_check()` shows your variables unset even though the file is correct,
+force the load from `.Rprofile` (which *is* read):
+
+```{r}
+# in ~/.Rprofile
+if (file.exists("~/.Renviron")) readRenviron("~/.Renviron")
+```
+
+## 4. PAT vs. CLI OAuth
+
+The odbc backend authenticates via `odbc::databricks()`, which accepts either a
+`DATABRICKS_TOKEN` personal access token **or** the OAuth token from a matching
+Databricks CLI profile. A `.databrickscfg` that only contains OAuth settings
+(host / account_id / workspace_id / auth_type, no token) is *not* usable by the
+odbc driver on its own -- generate a PAT (Databricks: User Settings ->
+Developer -> Access tokens) and set `DATABRICKS_TOKEN`.
+
+## 5. The Spark backends need local Spark
+
+The `databricks` and `databricks_connect` backends run through `sparklyr`. On
+Windows, local Spark additionally requires the **Microsoft Visual C++ 2010 SP1
+x64 Redistributable**. If it is missing, `bricks_check("databricks")` flags it
+and `bricks_connect("databricks")` aborts with a
+`bricks_error_spark_unavailable` condition pointing at the fix:
+
+1. Install `vcredist_x64.exe` from
+   <https://www.microsoft.com/en-us/download/details.aspx?id=26999>.
+2. Restart R.
+3. `sparklyr::spark_install()`.
+
+For plain SQL-warehouse queries you do not need Spark at all -- use the default
+`odbc` backend.

@@ -108,15 +108,10 @@ bricks_disconnect <- function(con) {
 #' }
 databricks_connect <- function(warehouse_id = Sys.getenv("DATABRICKS_WAREHOUSE_ID")) {
   rlang::check_installed(c("DBI", "odbc"), "for the odbc backend.")
-  if (!nzchar(warehouse_id)) {
-    rlang::abort("`DATABRICKS_WAREHOUSE_ID` is not set (check your .Renviron).")
-  }
   # No DATABRICKS_TOKEN check: auth may come from the CLI profile's OAuth token.
   # If neither that nor a PAT is available, odbc raises a clear "failed to detect
   # ambient Databricks credentials" of its own.
-  if (!nzchar(Sys.getenv("DATABRICKS_HOST"))) {
-    rlang::abort("`DATABRICKS_HOST` is not set (check your .Renviron).")
-  }
+  .check_env(c("DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID"), "odbc")
   DBI::dbConnect(
     odbc::databricks(),
     driver   = "Databricks ODBC Driver",
@@ -167,13 +162,12 @@ databricks_spark_connect <- function(method = c("databricks_connect", "databrick
 
   # Native, in-notebook: attach to the ambient Databricks cluster; creds implicit.
   if (method == "databricks") {
+    .check_local_spark()
     return(sparklyr::spark_connect(method = "databricks"))
   }
 
   # Databricks Connect from an IDE: needs host + a cluster/compute-scoped token.
-  if (!nzchar(Sys.getenv("DATABRICKS_HOST")) || !nzchar(Sys.getenv("DATABRICKS_TOKEN"))) {
-    rlang::abort("`DATABRICKS_HOST` and `DATABRICKS_TOKEN` must be set (check your .Renviron).")
-  }
+  .check_env(c("DATABRICKS_HOST", "DATABRICKS_TOKEN"), "databricks_connect")
 
   args <- list(method = "databricks_connect")
   if (serverless) {
@@ -187,5 +181,5 @@ databricks_spark_connect <- function(method = c("databricks_connect", "databrick
     }
     args$cluster_id <- cluster_id
   }
-  do.call(sparklyr::spark_connect, args)
+  .with_serverless_hint(do.call(sparklyr::spark_connect, args))
 }
